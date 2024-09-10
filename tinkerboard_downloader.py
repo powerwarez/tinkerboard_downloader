@@ -19,12 +19,14 @@ def download_image(url, file_name):
         return None
 
 # ZIP 파일 생성 함수
-def create_zip_file(df):
+def create_zip_file(df, download_status, progress_bar):
     zip_buffer = BytesIO()
     with ZipFile(zip_buffer, 'w') as zip_file:
         current_folder = None
         file_counter = 1  # 파일 번호 초기화
-        
+        total_files = len(df) - 8  # 처리할 파일 개수 (8행 이후)
+        completed_files = 0  # 완료된 파일 카운트
+
         for idx, row in df.iterrows():
             if idx < 8:  # 8행 이전은 무시
                 continue
@@ -47,6 +49,13 @@ def create_zip_file(df):
                     # 폴더별로 이미지 저장
                     folder_path = f"{current_folder}/"  # 폴더 이름
                     zip_file.writestr(f"{folder_path}{file_name}", image_data)
+                    # 다운로드 상태 업데이트
+                    download_status.write(f"다운로드 완료: {file_name}")
+                    
+                    # 진행 바 업데이트
+                    completed_files += 1
+                    progress_bar.progress(completed_files / total_files)
+
                     file_counter += 1  # 파일 번호 증가
 
     zip_buffer.seek(0)
@@ -77,17 +86,22 @@ if uploaded_file is not None:
 
     st.write("엑셀 데이터:")
     st.dataframe(df.head())
-    
+
     # ZIP 파일이 이미 생성되었는지 확인
     if 'zip_file' not in st.session_state:
         st.write("이미지 다운로드 중입니다. 잠시만 기다려주세요...")
+
+        # 다운로드 상태와 진행 바를 업데이트할 공간
+        download_status = st.empty()  # 상태를 업데이트할 공간
+        progress_bar = st.progress(0)  # 진행률 바
+
         # ZIP 파일 생성 및 세션 상태에 저장
-        st.session_state.zip_file = create_zip_file(df)
+        st.session_state.zip_file = create_zip_file(df, download_status, progress_bar)
         st.write("이미지 다운로드가 완료되었습니다!")
 
     # ZIP 파일 다운로드 버튼
     st.download_button(
-        label="띵커벨 이미지 다운로드 받기 (폴더별 구분된 ZIP 파일)",
+        label="띵커벨 이미지 다운로드 (폴더별 구분된 ZIP 파일)",
         data=st.session_state.zip_file,
         file_name="띵커벨이미지.zip",
         mime="application/zip"

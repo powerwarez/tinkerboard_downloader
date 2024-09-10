@@ -30,7 +30,7 @@ def download_image(url, folder, file_name):
         st.write(f"에러 발생: {e}")
 
 # Streamlit 앱 구성
-st.title("엑셀 파일 처리 및 이미지 다운로드")
+st.title("띵커벨 보드 이미지 다운로더")
 
 uploaded_file = st.file_uploader("엑셀 파일 업로드 (.xls 형식)", type=["xls"])
 
@@ -75,7 +75,7 @@ if uploaded_file is not None:
             
             # 이미지 다운로드
             if current_folder and isinstance(attachment_url, str) and attachment_url.startswith('http'):
-                file_name = f"image_{idx}.jpg"
+                file_name = f"image_{idx-8}.jpg"
                 download_image(attachment_url, current_folder, file_name)
             
             # A열이 비어 있으면 종료

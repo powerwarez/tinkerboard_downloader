@@ -88,7 +88,7 @@ if uploaded_file is not None:
     st.dataframe(df.head())
     st.image("https://huggingface.co/spaces/powerwarez/gailabicon/resolve/main/gailab07.png", width=50)
     st.write("제작: 교사 서동성")
-    st.wirte("띵커벨 이미지가 준비되면 다운로드 버튼이 생깁니다. 잠시 기다려주세요.")
+    st.write("띵커벨 이미지가 준비되면 다운로드 버튼이 생깁니다. 잠시 기다려주세요.")
     # ZIP 파일이 이미 생성되었는지 확인
     if 'zip_file' not in st.session_state:
         st.write("이미지 다운로드 중입니다. 잠시만 기다려주세요...")

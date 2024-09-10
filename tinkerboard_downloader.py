@@ -44,7 +44,7 @@ if uploaded_file is not None:
     
     st.write("엑셀 데이터:")
     st.dataframe(df.head())
-    st.image("https://huggingface.co/spaces/powerwarez/gailabicon/resolve/main/gailab07.png")
+    st.image("https://huggingface.co/spaces/powerwarez/gailabicon/resolve/main/gailab07.png", width=20, height=20)
     st.write("제작:교사 서동성")
 
     # 다운로드할 파일을 담을 임시 저장소 (메모리 상에서 zip 파일 생성)

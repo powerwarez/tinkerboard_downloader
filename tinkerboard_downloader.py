@@ -20,7 +20,7 @@ def download_image(url, file_name):
         return None
 
 # Streamlit 앱 구성
-st.title("엑셀 파일 처리 및 이미지 다운로드 (폴더 구분)")
+st.title("띵커벨 이미지 다운로더")
 
 uploaded_file = st.file_uploader("엑셀 파일 업로드 (.xls 형식)", type=["xls"])
 

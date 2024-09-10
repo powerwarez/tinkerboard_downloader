@@ -1,41 +1,31 @@
 import streamlit as st
-import os
 import pandas as pd
 import xlrd
 import requests
-from pathlib import Path
-
-# 바탕화면 경로 가져오기
-desktop_path = Path(os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop'))
-
-# 폴더 생성 함수
-def create_folder(folder_name):
-    folder_path = desktop_path / folder_name
-    folder_path.mkdir(parents=True, exist_ok=True)
-    st.write(f"폴더 생성: {folder_path}")
-    return folder_path
+from io import BytesIO
+from zipfile import ZipFile
+import os
 
 # 이미지 다운로드 함수
-def download_image(url, folder, file_name):
-    file_path = folder / file_name
+def download_image(url, file_name):
     try:
         response = requests.get(url)
         if response.status_code == 200:
-            with open(file_path, 'wb') as f:
-                f.write(response.content)
-            st.write(f"이미지 다운로드 완료: {file_name}")
+            return response.content
         else:
             st.write(f"이미지 다운로드 실패: {file_name} (상태 코드: {response.status_code})")
+            return None
     except Exception as e:
         st.write(f"에러 발생: {e}")
+        return None
 
 # Streamlit 앱 구성
-st.title("띵커벨 보드 이미지 다운로더")
+st.title("엑셀 파일 처리 및 이미지 다운로드 (폴더 구분)")
 
 uploaded_file = st.file_uploader("엑셀 파일 업로드 (.xls 형식)", type=["xls"])
 
 if uploaded_file is not None:
-    # 업로드된 파일을 읽기, 특정 시트 "보드_page_1" 사용
+    # 업로드된 파일을 읽기
     workbook = xlrd.open_workbook(file_contents=uploaded_file.read())
     
     # "보드_page_1" 시트 선택
@@ -55,32 +45,36 @@ if uploaded_file is not None:
     st.write("엑셀 데이터:")
     st.dataframe(df.head())
 
-    # 데이터 처리
-    current_folder = None
-    for idx, row in df.iterrows():
-        if idx < 8:  # 8행 이전은 무시
-            continue
-        
-        if len(row) > 5:  # F열(5번째 열)이 있는지 확인
+    # 다운로드할 파일을 담을 임시 저장소 (메모리 상에서 zip 파일 생성)
+    zip_buffer = BytesIO()
+    with ZipFile(zip_buffer, 'w') as zip_file:
+        current_folder = None
+        for idx, row in df.iterrows():
+            if idx < 8:  # 8행 이전은 무시
+                continue
+            
             no_column = row[0]  # A열 (No.열)
             attachment_url = row[5]  # F열 (첨부파일 URL)
             
-            if no_column == '※보드 소유자 닉네임 앞에는 * 표시가 붙습니다.':
-                st.write("작업이 완료되었습니다.")
-                break
-            
-            # A열이 숫자가 아닌 경우 폴더 생성
+            # A열이 숫자가 아닌 경우 새로운 폴더 생성 (폴더 이름 구분)
             if isinstance(no_column, str) and no_column.strip() != '':
-                current_folder = create_folder(no_column.strip())
-            
-            # 이미지 다운로드
+                current_folder = no_column.strip()
+
+            # 이미지 다운로드 및 폴더에 저장
             if current_folder and isinstance(attachment_url, str) and attachment_url.startswith('http'):
-                file_name = f"image_{idx-8}.jpg"
-                download_image(attachment_url, current_folder, file_name)
-            
-            # A열이 비어 있으면 종료
-            if no_column == '':
-                st.write("작업이 완료되었습니다.")
-                break
-        else:
-            st.warning(f"{idx} 행에 F열이 없습니다. 건너뜁니다.")
+                file_name = f"image_{idx}.jpg"
+                image_data = download_image(attachment_url, file_name)
+                
+                if image_data:
+                    # 폴더별로 이미지 저장
+                    folder_path = f"{current_folder}/"  # 폴더 이름
+                    zip_file.writestr(f"{folder_path}{file_name}", image_data)
+        
+    # zip 파일을 다운로드할 수 있게 제공
+    zip_buffer.seek(0)
+    st.download_button(
+        label="띵커벨 이미지 다운로드 (폴더별 구분된 ZIP 파일)",
+        data=zip_buffer,
+        file_name="띵커벨 이미지.zip",
+        mime="application/zip"
+    )

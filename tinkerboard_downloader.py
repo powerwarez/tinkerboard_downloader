@@ -44,13 +44,23 @@ if uploaded_file is not None:
     
     st.write("엑셀 데이터:")
     st.dataframe(df.head())
-    st.image("https://huggingface.co/spaces/powerwarez/gailabicon/resolve/main/gailab07.png", width=20)
-    st.write("제작:교사 서동성")
+    st.image("https://huggingface.co/spaces/powerwarez/gailabicon/resolve/main/gailab07.png", width=50)
+    st.write("제작: 교사 서동성")
+    st.write("")
+    st.write("이미지 다운로드가 완료되면 압축파일을 받을 수 있는 버튼이 아래에 생깁니다.")
+    st.write("잠시 후 아래에 생기는 버튼을 눌러 다운받아주세요.")
+
+    # 다운로드 상태와 진행 바를 업데이트할 공간
+    download_status = st.empty()  # 상태를 업데이트할 공간
+    progress_bar = st.progress(0)  # 진행률 바
 
     # 다운로드할 파일을 담을 임시 저장소 (메모리 상에서 zip 파일 생성)
     zip_buffer = BytesIO()
     with ZipFile(zip_buffer, 'w') as zip_file:
         current_folder = None
+        file_counter = 1  # 파일 번호 초기화
+        total_files = len(df) - 8  # 총 처리할 파일 개수 (8행 이후)
+
         for idx, row in df.iterrows():
             if idx < 8:  # 8행 이전은 무시
                 continue
@@ -61,22 +71,33 @@ if uploaded_file is not None:
             # A열이 숫자가 아닌 경우 새로운 폴더 생성 (폴더 이름 구분)
             if isinstance(no_column, str) and no_column.strip() != '':
                 current_folder = no_column.strip()
+                file_counter = 1  # 새로운 폴더가 생기면 파일 카운터 초기화
 
             # 이미지 다운로드 및 폴더에 저장
             if current_folder and isinstance(attachment_url, str) and attachment_url.startswith('http'):
-                file_name = f"image_{idx}.jpg"
+                # 파일 번호에 맞게 파일명 지정
+                file_name = f"image_{file_counter:03}.jpg"
                 image_data = download_image(attachment_url, file_name)
                 
                 if image_data:
                     # 폴더별로 이미지 저장
                     folder_path = f"{current_folder}/"  # 폴더 이름
                     zip_file.writestr(f"{folder_path}{file_name}", image_data)
+
+                    # 상태 업데이트
+                    download_status.write(f"{file_name} 다운로드 완료")
+                    
+                    # 진행 바 업데이트
+                    progress = (idx - 8 + 1) / total_files
+                    progress_bar.progress(progress)
+
+                    file_counter += 1  # 파일 번호 증가
         
     # zip 파일을 다운로드할 수 있게 제공
     zip_buffer.seek(0)
     st.download_button(
         label="띵커벨 이미지 다운로드 (폴더별 구분된 ZIP 파일)",
         data=zip_buffer,
-        file_name="띵커벨 이미지.zip",
+        file_name="띵커벨이미지.zip",
         mime="application/zip"
     )

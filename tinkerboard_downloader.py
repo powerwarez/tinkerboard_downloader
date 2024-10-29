@@ -4,6 +4,7 @@ import xlrd
 import requests
 from io import BytesIO
 from zipfile import ZipFile
+import os
 
 # 이미지 다운로드 함수
 def download_image(url, file_name):
@@ -19,7 +20,7 @@ def download_image(url, file_name):
         return None
 
 # ZIP 파일 생성 함수
-def create_zip_file(df, download_status, progress_bar):
+def create_zip_file(df, download_status, progress_bar, excel_file_name):
     zip_buffer = BytesIO()
     with ZipFile(zip_buffer, 'w') as zip_file:
         current_folder = None
@@ -42,7 +43,7 @@ def create_zip_file(df, download_status, progress_bar):
             # 이미지 다운로드 및 폴더에 저장
             if current_folder and isinstance(attachment_url, str) and attachment_url.startswith('http'):
                 # 파일 번호에 맞게 파일명 지정
-                file_name = f"image_{file_counter:03}.jpg"
+                file_name = f"{excel_file_name}_{file_counter:03}.jpg"  # 엑셀 파일 이름 추가
                 image_data = download_image(attachment_url, file_name)
                 
                 if image_data:
@@ -67,6 +68,9 @@ st.title("띵커벨 이미지 다운로더")
 uploaded_file = st.file_uploader("엑셀 파일 업로드 (.xls 형식)", type=["xls"])
 
 if uploaded_file is not None:
+    # 엑셀 파일 이름 가져오기 (확장자 제거)
+    excel_file_name = os.path.splitext(uploaded_file.name)[0]
+    
     # 업로드된 파일을 읽기
     workbook = xlrd.open_workbook(file_contents=uploaded_file.read())
     
@@ -98,7 +102,7 @@ if uploaded_file is not None:
         progress_bar = st.progress(0)  # 진행률 바
 
         # ZIP 파일 생성 및 세션 상태에 저장
-        st.session_state.zip_file = create_zip_file(df, download_status, progress_bar)
+        st.session_state.zip_file = create_zip_file(df, download_status, progress_bar, excel_file_name)
         st.write("이미지 다운로드가 완료되었습니다!")
 
     # ZIP 파일 다운로드 버튼

@@ -42,14 +42,15 @@ def create_zip_file(df, download_status, progress_bar, excel_file_name):
 
             # 이미지 다운로드 및 폴더에 저장
             if current_folder and isinstance(attachment_url, str) and attachment_url.startswith('http'):
-                # 파일 번호에 맞게 파일명 지정
-                file_name = f"{excel_file_name}_{file_counter:03}.jpg"  # 엑셀 파일 이름 추가
+                # URL에서 파일 이름 추출
+                file_name = attachment_url.split('/')[-1]  # URL의 마지막 부분을 파일명으로 사용
                 image_data = download_image(attachment_url, file_name)
                 
                 if image_data:
                     # 폴더별로 이미지 저장
                     folder_path = f"{current_folder}/"  # 폴더 이름
                     zip_file.writestr(f"{folder_path}{file_name}", image_data)
+                    
                     # 다운로드 상태 업데이트
                     download_status.write(f"다운로드 완료: {file_name}")
                     
@@ -93,6 +94,7 @@ if uploaded_file is not None:
     st.image("https://huggingface.co/spaces/powerwarez/gailabicon/resolve/main/gailab07.png", width=50)
     st.write("제작: 교사 서동성")
     st.write("띵커벨 이미지가 준비되면 다운로드 버튼이 생깁니다. 잠시 기다려주세요.")
+    
     # ZIP 파일이 이미 생성되었는지 확인
     if 'zip_file' not in st.session_state:
         st.write("이미지 다운로드 중입니다. 잠시만 기다려주세요...")

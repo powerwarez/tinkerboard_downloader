@@ -97,7 +97,9 @@ if uploaded_file is not None:
     df = pd.DataFrame(data)
 
     st.write("엑셀 데이터:")
-    st.dataframe(df.head())
+    # Arrow 직렬화 에러 방지를 위해 문자열로 변환
+    display_df = df.head().astype(str)
+    st.dataframe(display_df)
     st.image("https://huggingface.co/spaces/powerwarez/gailabicon/resolve/main/gailab07.png", width=50)
     st.write("제작: 교사 서동성")
     st.write("띵커벨 이미지가 준비되면 다운로드 버튼이 생깁니다. 잠시 기다려주세요.")

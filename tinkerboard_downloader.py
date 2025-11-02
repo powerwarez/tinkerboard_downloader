@@ -9,7 +9,14 @@ import os
 # 이미지 다운로드 함수
 def download_image(url, file_name):
     try:
-        response = requests.get(url)
+        # User-Agent 헤더 추가하여 브라우저처럼 보이게 함
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Referer': url,
+            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+            'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7'
+        }
+        response = requests.get(url, headers=headers, timeout=30)
         if response.status_code == 200:
             return response.content
         else:

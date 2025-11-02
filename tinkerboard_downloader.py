@@ -5,6 +5,10 @@ import requests
 from io import BytesIO
 from zipfile import ZipFile
 import os
+import time
+
+# 세션 생성 (쿠키 유지)
+session = requests.Session()
 
 # 이미지 다운로드 함수
 def download_image(url, file_name):
@@ -14,17 +18,18 @@ def download_image(url, file_name):
         st.write(f"📝 파일명: {file_name}")
         
         # User-Agent 헤더 추가하여 브라우저처럼 보이게 함
-        # Referer를 띵커벨 메인 도메인으로 설정 (이미지 URL이 아닌 실제 페이지)
+        # Referer를 이미지 서버 도메인으로 설정
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': 'https://www.tkbell.co.kr/',
+            'Referer': 'https://b.tkbell.co.kr/',
+            'Origin': 'https://www.tkbell.co.kr',
             'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
             'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
             'Accept-Encoding': 'gzip, deflate, br',
             'Connection': 'keep-alive',
             'Sec-Fetch-Dest': 'image',
             'Sec-Fetch-Mode': 'no-cors',
-            'Sec-Fetch-Site': 'cross-site',
+            'Sec-Fetch-Site': 'same-site',
             'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"Windows"'
@@ -32,16 +37,19 @@ def download_image(url, file_name):
         
         st.write(f"📤 요청 헤더: {headers}")
         
-        response = requests.get(url, headers=headers, timeout=30, allow_redirects=True)
+        # Session을 사용하여 쿠키 유지
+        response = session.get(url, headers=headers, timeout=30, allow_redirects=True)
         
         st.write(f"📥 응답 상태 코드: {response.status_code}")
         st.write(f"📥 응답 헤더: {dict(response.headers)}")
         
         if response.status_code == 200:
             st.write(f"✅ 다운로드 성공: {file_name}")
+            time.sleep(0.5)  # 요청 간 0.5초 지연
             return response.content
         else:
             st.write(f"❌ 이미지 다운로드 실패: {file_name} (상태 코드: {response.status_code})")
+            time.sleep(1)  # 실패 시 1초 지연
             return None
     except Exception as e:
         st.write(f"⚠️ 에러 발생: {e}")

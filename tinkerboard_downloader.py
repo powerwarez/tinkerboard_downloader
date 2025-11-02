@@ -9,6 +9,10 @@ import os
 # 이미지 다운로드 함수
 def download_image(url, file_name):
     try:
+        # 디버깅: URL 출력
+        st.write(f"🔍 시도 중인 URL: {url}")
+        st.write(f"📝 파일명: {file_name}")
+        
         # User-Agent 헤더 추가하여 브라우저처럼 보이게 함
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -16,14 +20,24 @@ def download_image(url, file_name):
             'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
             'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7'
         }
+        
+        st.write(f"📤 요청 헤더: {headers}")
+        
         response = requests.get(url, headers=headers, timeout=30)
+        
+        st.write(f"📥 응답 상태 코드: {response.status_code}")
+        st.write(f"📥 응답 헤더: {dict(response.headers)}")
+        
         if response.status_code == 200:
+            st.write(f"✅ 다운로드 성공: {file_name}")
             return response.content
         else:
-            st.write(f"이미지 다운로드 실패: {file_name} (상태 코드: {response.status_code})")
+            st.write(f"❌ 이미지 다운로드 실패: {file_name} (상태 코드: {response.status_code})")
             return None
     except Exception as e:
-        st.write(f"에러 발생: {e}")
+        st.write(f"⚠️ 에러 발생: {e}")
+        import traceback
+        st.write(f"상세 에러: {traceback.format_exc()}")
         return None
 
 # ZIP 파일 생성 함수

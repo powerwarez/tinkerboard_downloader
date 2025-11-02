@@ -18,7 +18,6 @@ def initialize_session():
         return
     
     try:
-        st.write("🌐 띵커벨 사이트에 접속 중...")
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -32,30 +31,18 @@ def initialize_session():
             'Sec-Fetch-User': '?1'
         }
         
-        # 메인 페이지 방문
-        response = session.get('https://www.tkbell.co.kr/', headers=headers, timeout=30)
-        st.write(f"✅ 메인 페이지 접속 완료 (상태 코드: {response.status_code})")
-        st.write(f"🍪 받은 쿠키: {dict(session.cookies)}")
-        
-        # 이미지 서버 도메인도 방문
-        response = session.get('https://b.tkbell.co.kr/', headers=headers, timeout=30)
-        st.write(f"✅ 이미지 서버 접속 완료 (상태 코드: {response.status_code})")
-        st.write(f"🍪 현재 쿠키: {dict(session.cookies)}")
-        
-        time.sleep(1)  # 1초 대기
+        # 메인 페이지 방문하여 쿠키 받기
+        session.get('https://www.tkbell.co.kr/', headers=headers, timeout=30)
+        time.sleep(0.5)
         session_initialized = True
     except Exception as e:
-        st.write(f"⚠️ 세션 초기화 에러: {e}")
+        st.warning(f"세션 초기화 실패: {e}")
 
 # 이미지 다운로드 함수
 def download_image(url, file_name):
     try:
         # 첫 번째 다운로드 시도 전에 세션 초기화
         initialize_session()
-        
-        # 디버깅: URL 출력
-        st.write(f"🔍 시도 중인 URL: {url}")
-        st.write(f"📝 파일명: {file_name}")
         
         # User-Agent 헤더 추가하여 브라우저처럼 보이게 함
         headers = {
@@ -73,27 +60,17 @@ def download_image(url, file_name):
             'sec-ch-ua-platform': '"Windows"'
         }
         
-        st.write(f"📤 요청 헤더: {headers}")
-        st.write(f"🍪 사용 중인 쿠키: {dict(session.cookies)}")
-        
         # Session을 사용하여 쿠키 유지
         response = session.get(url, headers=headers, timeout=30, allow_redirects=True)
         
-        st.write(f"📥 응답 상태 코드: {response.status_code}")
-        st.write(f"📥 응답 헤더: {dict(response.headers)}")
-        
         if response.status_code == 200:
-            st.write(f"✅ 다운로드 성공: {file_name}")
-            time.sleep(0.5)  # 요청 간 0.5초 지연
+            time.sleep(0.3)  # 요청 간 0.3초 지연
             return response.content
         else:
-            st.write(f"❌ 이미지 다운로드 실패: {file_name} (상태 코드: {response.status_code})")
-            time.sleep(1)  # 실패 시 1초 지연
+            st.warning(f"⚠️ 다운로드 실패: {file_name} (상태 코드: {response.status_code})")
             return None
     except Exception as e:
-        st.write(f"⚠️ 에러 발생: {e}")
-        import traceback
-        st.write(f"상세 에러: {traceback.format_exc()}")
+        st.error(f"❌ 에러 발생 ({file_name}): {e}")
         return None
 
 # ZIP 파일 생성 함수
@@ -129,7 +106,7 @@ def create_zip_file(df, download_status, progress_bar, excel_file_name):
                     zip_file.writestr(f"{folder_path}{file_name}", image_data)
                     
                     # 다운로드 상태 업데이트
-                    download_status.write(f"다운로드 완료: {file_name}")
+                    download_status.write(f"✅ 완료: {file_name} ({completed_files + 1}/{total_files})")
                     
                     # 진행 바 업데이트
                     completed_files += 1
@@ -142,6 +119,10 @@ def create_zip_file(df, download_status, progress_bar, excel_file_name):
 
 # Streamlit 앱 구성
 st.title("띵커벨 이미지 다운로더")
+
+# 중요 안내
+st.info("⚠️ **중요:** 띵커벨은 해외 IP를 차단합니다. Streamlit Cloud에서는 작동하지 않으므로, **반드시 로컬 컴퓨터(한국 내)에서 실행**하세요!")
+st.markdown("---")
 
 uploaded_file = st.file_uploader("엑셀 파일 업로드 (.xls 형식)", type=["xls"])
 

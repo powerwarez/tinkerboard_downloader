@@ -9,20 +9,58 @@ import time
 
 # 세션 생성 (쿠키 유지)
 session = requests.Session()
+session_initialized = False
+
+# 세션 초기화 함수 (메인 페이지 방문하여 쿠키 받기)
+def initialize_session():
+    global session_initialized
+    if session_initialized:
+        return
+    
+    try:
+        st.write("🌐 띵커벨 사이트에 접속 중...")
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1'
+        }
+        
+        # 메인 페이지 방문
+        response = session.get('https://www.tkbell.co.kr/', headers=headers, timeout=30)
+        st.write(f"✅ 메인 페이지 접속 완료 (상태 코드: {response.status_code})")
+        st.write(f"🍪 받은 쿠키: {dict(session.cookies)}")
+        
+        # 이미지 서버 도메인도 방문
+        response = session.get('https://b.tkbell.co.kr/', headers=headers, timeout=30)
+        st.write(f"✅ 이미지 서버 접속 완료 (상태 코드: {response.status_code})")
+        st.write(f"🍪 현재 쿠키: {dict(session.cookies)}")
+        
+        time.sleep(1)  # 1초 대기
+        session_initialized = True
+    except Exception as e:
+        st.write(f"⚠️ 세션 초기화 에러: {e}")
 
 # 이미지 다운로드 함수
 def download_image(url, file_name):
     try:
+        # 첫 번째 다운로드 시도 전에 세션 초기화
+        initialize_session()
+        
         # 디버깅: URL 출력
         st.write(f"🔍 시도 중인 URL: {url}")
         st.write(f"📝 파일명: {file_name}")
         
         # User-Agent 헤더 추가하여 브라우저처럼 보이게 함
-        # Referer를 이미지 서버 도메인으로 설정
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': 'https://b.tkbell.co.kr/',
-            'Origin': 'https://www.tkbell.co.kr',
+            'Referer': 'https://www.tkbell.co.kr/',
             'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
             'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
             'Accept-Encoding': 'gzip, deflate, br',
@@ -36,6 +74,7 @@ def download_image(url, file_name):
         }
         
         st.write(f"📤 요청 헤더: {headers}")
+        st.write(f"🍪 사용 중인 쿠키: {dict(session.cookies)}")
         
         # Session을 사용하여 쿠키 유지
         response = session.get(url, headers=headers, timeout=30, allow_redirects=True)
